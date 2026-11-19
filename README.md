@@ -23,7 +23,9 @@ TDModules/
 │   ├── 02_NETWORK_AND_TUNNELS.md     # 6 бесплатных туннелей, Direct LAN, Heartbeat
 │   ├── 03_FREE_LLM_POOL.md           # Ротация бесплатных LLM, PromptSanitizer, DeviceProfiler
 │   ├── 04_POLYGLOT_QUIZ_AND_DICTIONARY.md # Concept-Pivot термины, полиморфные тесты, SM-2 SRS
-│   └── 05_AI_AGENT_PROMPT.md         # Промпт для агентов в соседних вкладках
+│   ├── 04_POLYGLOT_QUIZ_AND_DICTIONARY.md # Concept-Pivot термины, полиморфные тесты, SM-2 SRS
+│   ├── 05_AI_AGENT_PROMPT.md         # Промпт для агентов в соседних вкладках
+│   └── 06_TDSCRIPT_CORE_LANGUAGE.md  # Детерминированный скриптинг, Host SPI, Capabilities, 0 KB VRAM
 ├── modules/                        # Исходный код модулей (Kotlin/Java)
 │   ├── core-security/              # Безопасность, шифрование и обфускация
 │   │   └── SessionCrypto.kt, SecureStringMask.kt, RateLimiter.kt
@@ -31,16 +33,19 @@ TDModules/
 │   │   └── TunnelManager.kt, NetworkUtils.kt
 │   ├── core-ai/                    # Нейросетевая инфраструктура
 │   │   └── FreeModelPool.kt, PromptSanitizer.kt, DeviceProfiler.kt
-│   └── core-education/             # Образовательный движок и полиглот-словари
-│       ├── model/ConceptTermModels.kt
-│       ├── model/PolymorphicQuizModels.kt
-│       ├── engine/PositionalShuffle.kt
-│       └── parser/UnifiedEducationalParser.kt
+│   ├── core-education/             # Образовательный движок и полиглот-словари
+│   │   ├── model/ConceptTermModels.kt
+│   │   ├── model/PolymorphicQuizModels.kt
+│   │   ├── engine/PositionalShuffle.kt
+│   │   └── parser/UnifiedEducationalParser.kt
+│   └── core-tdscript/              # Единый детерминированный язык TDscript Core 1.0.1
+│       └── Lexer.kt, Parser.kt, AST.kt, Interpreter.kt
 ├── templates/                      # Шаблоны интеграции
 │   ├── proguard-rules.pro          # Правила защиты и обфускации R8/ProGuard
 │   └── gradle-include.kts          # Инструкция и шаблоны подключения в Gradle
 └── releases/                       # Архив неизменяемых срезов старых версий
-    └── v1.0.0/                     # Срез релиза 1.0.0
+    ├── v1.0.0/                     # Срез релиза 1.0.0
+    └── v1.1.0/                     # Срез релиза 1.1.0 (включая core-tdscript)
 ```
 
 ---
@@ -53,6 +58,8 @@ TDModules/
 | **`core-network`** | Пул из 6 обратных SSH-шлюзов с $0 затратами (`localhost.run`, `pinggy.io`, `serveo.net`, `telebit.cloud`, `bore.pub`, Cloudflare Quick Tunnel), Direct LAN приоритет, активный Heartbeat каждые 20с. | `TunnelManager`<br>`NetworkUtils` |
 | **`core-ai`** | Ротация бесплатных моделей (`gpt-oss-120b`, `Meta-Llama-3_3-70B`, `openai-fast`), мониторинг здоровья эндпоинтов, обработка Retry-After, фильтр инъекций, профилировщик аппаратных ресурсов (RAM/CPU). | `FreeModelPool`<br>`PromptSanitizer`<br>`DeviceProfiler` |
 | **`core-education`** | **Concept-Pivot Model**: словари привязаны к семантическим концептам, позволяя врачам и специалистам добавлять новые языки (DE, ES, RU, EN) с сохранением интервального повторения (SM-2 SRS). **Polymorphic Quiz**: смена языка теста на лету (например, физика с немецкого на английский) без потери правильных ответов и прогресса. Всеядный парсер. | `ConceptTermModels`<br>`PolymorphicQuizModels`<br>`PositionalShuffle`<br>`UnifiedEducationalParser` |
+| **`core-tdscript`** | **0 KB VRAM / Headless**: унифицированное ядро сценарного языка TDscript (SPEC-TDS-CORE-1.0.1). Эшелонированная безопасность `Capabilities`, нормативный контракт `HostSPI` для текстового режима TUI (Tdroid), сетей (TDnetScript) и робототехники (TDRobotics). | `Lexer`<br>`Parser`<br>`AST`<br>`Interpreter`<br>`Capabilities`<br>`HostSPI` |
+
 
 ---
 

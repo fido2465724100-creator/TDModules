@@ -26,3 +26,7 @@ project(":core-ai").projectDir = file("modules/core-ai")
 
 include(":core-education")
 project(":core-education").projectDir = file("modules/core-education")
+
+include(":core-tdscript")
+project(":core-tdscript").projectDir = file("modules/core-tdscript")
+

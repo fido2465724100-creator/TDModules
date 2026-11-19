@@ -12,6 +12,7 @@ includeBuild("../TDModules") {
         substitute(module("com.tdmodules:core-network")).using(project(":core-network"))
         substitute(module("com.tdmodules:core-ai")).using(project(":core-ai"))
         substitute(module("com.tdmodules:core-education")).using(project(":core-education"))
+        substitute(module("com.tdmodules:core-tdscript")).using(project(":core-tdscript"))
     }
 }
 */
@@ -24,7 +25,8 @@ android {
             "../TDModules/modules/core-security/src/main/kotlin",
             "../TDModules/modules/core-network/src/main/kotlin",
             "../TDModules/modules/core-ai/src/main/kotlin",
-            "../TDModules/modules/core-education/src/main/kotlin"
+            "../TDModules/modules/core-education/src/main/kotlin",
+            "../TDModules/modules/core-tdscript/src/main/kotlin"
         )
     }
 }
