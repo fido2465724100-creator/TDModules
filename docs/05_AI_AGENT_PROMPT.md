@@ -10,6 +10,12 @@
 Все общие архитектурные модули, шифрование, сетевые туннели, образовательные движки и ядро языка TDscript вынесены в централизованный репозиторий:
 📂 `/home/anton/TDModules` (текущий стабильный релиз: v1.1.0)
 
+### 📦 Архивные копии предыдущих версий (Zero-Breakage):
+Все прошлые релизы неизменяемо сохранены в каталоге `releases/`:
+- `releases/v1.0.0/` — базовый срез v1.0.0 (core-security, core-network, core-ai, core-education).
+- `releases/v1.1.0/` — срез v1.1.0 (+ модуль core-tdscript).
+Если твой проект пока не готов переходить на новейший API, ты можешь подключить гарантированно стабильную архивную версию напрямую из `/home/anton/TDModules/releases/v1.0.0/`.
+
 ### 🎯 Твоя задача в текущем проекте:
 1. **Провести аудит дублирующегося кода**:
    Проверь свой проект на наличие локальных копий или самописных реализаций, которые уже стандартизированы и протестированы в `TDModules`:
@@ -23,15 +29,16 @@
    - Переключи проект на использование готовых модулей вместо дублирования кода.
    - Способы подключения подробно описаны в `/home/anton/TDModules/templates/gradle-include.kts`:
      - Рекомендуемый: через `includeBuild("../TDModules")` в `settings.gradle.kts`.
-     - Альтернативный: через `sourceSets` в `build.gradle.kts` (прямое включение каталогов `../TDModules/modules/.../src/main/kotlin`).
+     - Альтернативный: через `sourceSets` в `build.gradle.kts` (прямое включение каталогов `../TDModules/modules/.../src/main/kotlin` либо архивных `../TDModules/releases/v1.0.0/modules/.../src/main/kotlin`).
    - Удали локальные устаревшие копии классов (например, удали локальные `com.tdscript.core.*`, если они дублируются в исходниках твоего проекта).
 
-3. **Регламент обратного вклада (CONTRIBUTING_RULES)**:
+3. **Регламент обратного вклада и архивации (CONTRIBUTING_RULES)**:
    Если в процессе работы твоему проекту потребуется расширить общий модуль:
    - Внеси изменения напрямую в `/home/anton/TDModules/modules/`.
    - ОБЯЗАТЕЛЬНО обнови документацию в `/home/anton/TDModules/docs/` (сигнатуры, параметры, назначение).
    - Повысь версию в `/home/anton/TDModules/VERSION` по SemVer.
    - Запиши изменения в `/home/anton/TDModules/CHANGELOG.md` с указанием твоего проекта (например, `[Tdroid]` или `[TDnetScript]`).
+   - При выпуске нового релиза заархивируй срез в `/home/anton/TDModules/releases/vX.Y.Z/` для сохранения стабильности старых проектов.
    - Убедись, что все тесты проходят: выполни `./gradlew test` в `/home/anton/TDModules`.
 
 4. **Документация для изучения**:
@@ -39,4 +46,5 @@
    - `/home/anton/TDModules/docs/CONTRIBUTING_RULES.md`
    - `/home/anton/TDModules/docs/06_TDSCRIPT_CORE_LANGUAGE.md` (спецификация TDscript)
    - `/home/anton/TDModules/templates/gradle-include.kts` (шаблоны интеграции)
+   - `/home/anton/TDModules/releases/` (архив версий)
 ```
