@@ -42,6 +42,12 @@ interface HostSPI {
 
     fun uiToast(msg: String): Boolean = if (!checkCapability(Capabilities.UI_CORE, "UI_CORE")) false else true
     fun uiLog(msg: String): Boolean = if (!checkCapability(Capabilities.UI_CORE, "UI_CORE")) false else true
+
+    fun btConnect(target: String): Boolean = if (!checkCapability(Capabilities.BT_ACCESS, "BT_ACCESS")) false else true
+    fun btSend(text: String): Boolean = if (!checkCapability(Capabilities.BT_ACCESS, "BT_ACCESS")) false else true
+    fun btReadLine(): String? = if (!checkCapability(Capabilities.BT_ACCESS, "BT_ACCESS")) null else "BT_OK"
+
+    fun aiAsk(prompt: String): String? = if (!checkCapability(Capabilities.NET_READ, "NET_READ")) null else "AI_OK: $prompt"
 }
 
 class StandardHostSPI(override var capabilities: Int = Capabilities.NET_READ) : HostSPI {
@@ -297,6 +303,14 @@ class Interpreter(val host: HostSPI = StandardHostSPI()) {
                     "UI" -> when (method) {
                         "toast" -> return host.uiToast(args.getOrNull(0)?.toString() ?: "")
                         "log" -> return host.uiLog(args.getOrNull(0)?.toString() ?: "")
+                    }
+                    "BT" -> when (method) {
+                        "connect" -> return host.btConnect(args.getOrNull(0)?.toString() ?: "")
+                        "send" -> return host.btSend(args.getOrNull(0)?.toString() ?: "")
+                        "readLine" -> return host.btReadLine()
+                    }
+                    "AI" -> when (method) {
+                        "ask" -> return host.aiAsk(args.getOrNull(0)?.toString() ?: "")
                     }
                 }
             }

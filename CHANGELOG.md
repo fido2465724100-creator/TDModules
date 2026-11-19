@@ -5,6 +5,21 @@
 
 ---
 
+## [v1.2.0] - 2026-11-20 (Инициатор: TDnetScript)
+
+### ⚡ Расширение HostSPI в core-tdscript (Bluetooth и AI)
+- **core-tdscript**:
+  - `HostSPI`: Добавлены методы беспроводного взаимодействия `btConnect(target)`, `btSend(text)`, `btReadLine()` под защитой флага безопасности `Capabilities.BT_ACCESS`.
+  - `HostSPI`: Добавлен метод запроса к нейросетевому ассистенту `aiAsk(prompt)` под защитой мандата `Capabilities.NET_READ`.
+  - `Interpreter`: Добавлена диспетчеризация вызовов `BT.connect(...)`, `BT.send(...)`, `BT.readLine()` и `AI.ask(...)` в AST-анализаторе вызовов `MemberAccessNode`.
+  - Все новые методы снабжены реализациями по умолчанию (Zero-Breakage для существующих хостов `Tdroid` и `TDRobotics`).
+  - Добавлены модульные тесты в `TdscriptCoreTest.kt`.
+- **Документация и релизы**:
+  - Обновлен документ `docs/06_TDSCRIPT_CORE_LANGUAGE.md`.
+  - Сформирован архивный срез `releases/v1.2.0/`.
+
+---
+
 ## [v1.1.1] - 2026-11-19 (Инициатор: UniTest)
 
 ### 🛡️ Обратная совместимость и поддержка мобильных сессий в core-security и core-ai

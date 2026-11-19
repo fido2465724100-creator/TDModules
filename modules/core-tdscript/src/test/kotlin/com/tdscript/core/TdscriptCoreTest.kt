@@ -86,4 +86,21 @@ class TdscriptCoreTest {
         val interpreter = runScript(code)
         assertEquals(5, (interpreter.globals["count"] as Number).toInt())
     }
+
+    @Test
+    fun testBluetoothAndAiHostSPI() {
+        val host = StandardHostSPI(capabilities = Capabilities.BT_ACCESS or Capabilities.NET_READ)
+        val code = """
+            let conn = BT.connect("00:11:22:33:44:55")
+            let sent = BT.send("STATUS?")
+            let line = BT.readLine()
+            let aiAns = AI.ask("Explain error 02")
+        """.trimIndent()
+
+        val interpreter = runScript(code, host)
+        assertEquals(true, interpreter.globals["conn"])
+        assertEquals(true, interpreter.globals["sent"])
+        assertEquals("BT_OK", interpreter.globals["line"])
+        assertEquals("AI_OK: Explain error 02", interpreter.globals["aiAns"])
+    }
 }

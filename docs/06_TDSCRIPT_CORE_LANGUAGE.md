@@ -68,6 +68,14 @@ interface HostSPI {
     // Интерфейс пользователя
     fun uiToast(msg: String): Boolean
     fun uiLog(msg: String): Boolean
+
+    // Беспроводные интерфейсы (Bluetooth SPP / BLE UART)
+    fun btConnect(target: String): Boolean
+    fun btSend(text: String): Boolean
+    fun btReadLine(): String?
+
+    // Искусственный интеллект (AI Core Ask)
+    fun aiAsk(prompt: String): String?
 }
 ```
 
