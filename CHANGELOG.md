@@ -5,6 +5,20 @@
 
 ---
 
+## [v1.1.1] - 2026-11-19 (Инициатор: UniTest)
+
+### 🛡️ Обратная совместимость и поддержка мобильных сессий в core-security и core-ai
+- **core-security**:
+  - `SessionCrypto`: Добавлен метод `generateStudentToken(studentName, clientSalt)` для криптографической генерации токенов сессий с защитой от тайминг-атак.
+  - Добавлены псевдонимы `computeHmac(data)` и `verifyHmac(data, expectedHmac)` для бесшовной миграции проектов со старыми сигнатурами HMAC.
+- **core-ai**:
+  - `FreeModelPool`: Добавлены методы совместимости `reportNodeThrottled` и `reportNodeSuccess` с псевдонимами свойств `ENDPOINTS` и `MODELS`.
+  - `DeviceProfiler`: Добавлен `typealias DeviceSpecs = DeviceHardwareSpecs` и перегрузка `getSpecs(context: Any)` для бесшовной интеграции с Android `Context`.
+- **Релизы и архивы**:
+  - Сформирован архивный срез `releases/v1.1.1/`.
+
+---
+
 ## [v1.1.0] - 2026-11-19 (Инициаторы: Tdroid, TDnetScript, TDRobotics)
 
 ### ⚡ Добавлен унифицированный модуль core-tdscript

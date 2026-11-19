@@ -131,12 +131,28 @@ object FreeModelPool {
         node.status = if (node.failureCount >= 3) NodeHealthStatus.DEGRADED else NodeHealthStatus.COOLDOWN
     }
 
+    /**
+     * Псевдоним для совместимости со старыми вызовами reportNodeThrottled
+     */
+    @Synchronized
+    fun reportNodeThrottled(nodeId: String, retryAfterSeconds: Int = 60) {
+        reportError(nodeId, 429, retryAfterSeconds)
+    }
+
     @Synchronized
     fun reportSuccess(nodeId: String) {
         val node = NODES.find { it.id == nodeId } ?: return
         node.failureCount = 0
         node.status = NodeHealthStatus.HEALTHY
         cooldownUntilMap.remove(nodeId)
+    }
+
+    /**
+     * Псевдоним для совместимости со старыми вызовами reportNodeSuccess
+     */
+    @Synchronized
+    fun reportNodeSuccess(nodeId: String) {
+        reportSuccess(nodeId)
     }
 
     @Synchronized
@@ -148,4 +164,8 @@ object FreeModelPool {
             it.failureCount = 0
         }
     }
+
+    // Совместимость со старыми свойствами
+    val ENDPOINTS = listOf(NODES.first().baseUrl)
+    val MODELS = NODES.map { it.model }
 }

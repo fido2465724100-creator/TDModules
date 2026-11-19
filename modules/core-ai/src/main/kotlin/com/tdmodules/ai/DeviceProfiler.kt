@@ -23,6 +23,9 @@ data class DeviceHardwareSpecs(
     val recommendations: List<ModelRecommendation>
 )
 
+// Псевдоним типа для совместимости с кодом UniTest
+typealias DeviceSpecs = DeviceHardwareSpecs
+
 /**
  * Профилировщик аппаратных ресурсов устройства (RAM, CPU Cores, Архитектура).
  * Универсален: работает как на Android (ARM64/x86), так и на Desktop Linux/Windows/Mac.
@@ -114,6 +117,24 @@ object DeviceProfiler {
             recommendedModelTier = tier,
             recommendations = recommendations
         )
+    }
+
+    /**
+     * Перегрузка для Android Context (рефлексивное чтение ActivityManager без прямой зависимости от android.jar)
+     */
+    fun getSpecs(context: Any): DeviceHardwareSpecs {
+        return try {
+            val actManager = context.javaClass.getMethod("getSystemService", String::class.java).invoke(context, "activity")
+            val memInfoClass = Class.forName("android.app.ActivityManager\$MemoryInfo")
+            val memInfo = memInfoClass.getConstructor().newInstance()
+            actManager.javaClass.getMethod("getMemoryInfo", memInfoClass).invoke(actManager, memInfo)
+
+            val totalMem = memInfoClass.getField("totalMem").getLong(memInfo).toDouble() / (1024 * 1024 * 1024)
+            val availMem = memInfoClass.getField("availMem").getLong(memInfo).toDouble() / (1024 * 1024 * 1024)
+            getSpecs(totalMem, availMem)
+        } catch (_: Exception) {
+            getSpecs()
+        }
     }
 
     private fun readSystemRam(): Pair<Double, Double> {

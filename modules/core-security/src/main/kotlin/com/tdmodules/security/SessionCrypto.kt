@@ -14,6 +14,7 @@ import javax.crypto.spec.SecretKeySpec
  * 2. Симметричное шифрование трафика AES-GCM-256 с уникальным одноразовым 12-байтным IV/Nonce для каждого пакета.
  * 3. Расшифровка входящих ответов клиентов через RSA-OAEP (SHA-256 + MGF1).
  * 4. Проверка и генерация HMAC-SHA256 подписей с защитой от тайминг-атак (MessageDigest.isEqual).
+ * 5. Генерация уникальных сессионных токенов клиентов с криптографической солью.
  */
 class SessionCrypto {
 
@@ -109,6 +110,11 @@ class SessionCrypto {
     }
 
     /**
+     * Псевдоним для signHmacSha256 для совместимости со старыми вызовами
+     */
+    fun computeHmac(data: String): String = signHmacSha256(data)
+
+    /**
      * Безопасная проверка подписи HMAC-SHA256 с защитой от атак по времени (Timing Attacks)
      */
     fun verifyHmacSha256(data: String, expectedSignatureBase64: String): Boolean {
@@ -120,5 +126,20 @@ class SessionCrypto {
         } catch (e: Exception) {
             false
         }
+    }
+
+    /**
+     * Псевдоним для verifyHmacSha256 для совместимости со старыми вызовами
+     */
+    fun verifyHmac(data: String, expectedHmac: String): Boolean = verifyHmacSha256(data, expectedHmac)
+
+    /**
+     * Генерация безопасного уникального токена для ученика/клиента
+     */
+    fun generateStudentToken(studentName: String, clientSalt: String): String {
+        val randomSalt = ByteArray(16).apply { SecureRandom().nextBytes(this) }
+        val saltStr = Base64.getEncoder().encodeToString(randomSalt)
+        val raw = "$studentName:$clientSalt:$saltStr:${System.currentTimeMillis()}"
+        return signHmacSha256(raw)
     }
 }
