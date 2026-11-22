@@ -181,4 +181,52 @@ class EducationModuleTest {
         assertEquals(5, normalized.size)
         assertTrue(normalized.first().explanation.contains("случайным образом"))
     }
+
+    @Test
+    fun testMatchingPairsCrossLanguageAndDisappearanceConstants() {
+        assertEquals(180L, MatchingSessionConstants.DISAPPEAR_DELAY_MS)
+        assertEquals(320L, MatchingSessionConstants.DISAPPEAR_DURATION_MS)
+        assertEquals(0.82f, MatchingSessionConstants.DISAPPEAR_SCALE_FACTOR, 0.001f)
+        assertEquals(10, MatchingSessionConstants.DEFAULT_PAIRS_PER_ROUND)
+
+        val terms = (1..15).map { i ->
+            ConceptTerm(
+                conceptId = "concept_$i",
+                englishAnchor = "term_$i",
+                translations = mutableMapOf(
+                    "de" to TermTranslation(term = "de_term_$i"),
+                    "ru" to TermTranslation(term = "ru_term_$i"),
+                    "uk" to TermTranslation(term = "uk_term_$i")
+                )
+            )
+        }.toMutableList()
+
+        val deck = TerminologyDeck(
+            title = "B2 Test Deck",
+            defaultSourceLang = "ru",
+            defaultTargetLang = "de",
+            terms = terms
+        )
+
+        // Изучаем DE (целевой), интерфейс UK (родной)
+        val round0 = deck.toMatchingRound(roundIndex = 0, targetLang = "de", nativeLang = "uk")
+        assertEquals(0, round0.roundIndex)
+        assertEquals(2, round0.totalRounds)
+        assertEquals(10, round0.roundPairs.size)
+        assertEquals("de_term_1", round0.roundPairs[0].targetTerm)
+        assertEquals("uk_term_1", round0.roundPairs[0].nativeDefinition)
+
+        // Раунд 2 (следующие 5 слов)
+        val round1 = deck.toMatchingRound(roundIndex = 1, targetLang = "de", nativeLang = "uk")
+        assertEquals(1, round1.roundIndex)
+        assertEquals(5, round1.roundPairs.size)
+        assertEquals("de_term_11", round1.roundPairs[0].targetTerm)
+        assertEquals("uk_term_11", round1.roundPairs[0].nativeDefinition)
+
+        // Результат сопоставления
+        deck.recordMatchResult("concept_1", targetLang = "de", isCorrect = true)
+        val srsDe = deck.terms[0].getOrCreateSrs("de")
+        assertEquals(1, srsDe.correctCount)
+        assertEquals(0, srsDe.wrongCount)
+    }
 }

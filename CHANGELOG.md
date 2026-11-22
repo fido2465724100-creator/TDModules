@@ -5,6 +5,17 @@
 
 ---
 
+## [v1.3.1] - 2026-11-22 (Инициаторы: AIDream & UniTest)
+
+### 🎴 Matching Pairs Engine & Dynamic Cross-Language Projection в core-education
+- **core-education**:
+  - `MatchingSessionConstants`: Канонические константы анимации пар (`DISAPPEAR_DELAY_MS = 180L`, `DISAPPEAR_DURATION_MS = 320L`, `DISAPPEAR_SCALE_FACTOR = 0.82f`, `DEFAULT_PAIRS_PER_ROUND = 10`), унифицированные между AIDream и UniTest.
+  - `MatchingPairItem` & `MatchingRoundState`: Модели игрового раунда сопоставления с разделением изучаемого термина (`targetTerm`) и определения на языке интерфейса (`nativeDefinition`).
+  - `TerminologyDeck`: Добавлены методы `toMatchingPairs(targetLang, nativeLang)` и `toMatchingRound(roundIndex, pairsPerRound, targetLang, nativeLang)` для динамической проекции базы концептов на любую пару языков.
+  - Добавлены модульные тесты в `EducationModuleTest.kt` (`testMatchingPairsCrossLanguageAndDisappearanceConstants`).
+
+---
+
 ## [v1.3.0] - 2026-11-22 (Инициатор: UniTest)
 
 ### 🌐 Новый модуль централизованной локализации: core-localization

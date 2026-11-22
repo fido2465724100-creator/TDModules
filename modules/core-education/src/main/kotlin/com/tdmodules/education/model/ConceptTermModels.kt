@@ -133,6 +133,45 @@ data class FlashCardItem(
 )
 
 /**
+ * Стандарты таймингов анимации сопоставления пар (канонические параметры из AIDream/UniTest).
+ */
+object MatchingSessionConstants {
+    const val DISAPPEAR_DELAY_MS: Long = 180L
+    const val DISAPPEAR_DURATION_MS: Long = 320L
+    const val DISAPPEAR_SCALE_FACTOR: Float = 0.82f
+    const val MISMATCH_RESET_DELAY_MS: Long = 600L
+    const val DEFAULT_PAIRS_PER_ROUND: Int = 10
+}
+
+/**
+ * Элемент сессии сопоставления пар карточек (Matching Pairs Session).
+ * Инкапсулирует динамический выбор языка:
+ * - targetLang: язык изучаемого термина (левая колонка)
+ * - nativeLang: язык интерфейса/определения (правая колонка)
+ */
+data class MatchingPairItem(
+    val id: String = UUID.randomUUID().toString(),
+    val conceptId: String,
+    val targetTerm: String,
+    val nativeDefinition: String,
+    val correctCount: Int = 0,
+    val wrongCount: Int = 0,
+    val isMatched: Boolean = false
+)
+
+/**
+ * Состояние текущего игрового раунда сопоставления пар.
+ */
+data class MatchingRoundState(
+    val roundIndex: Int,
+    val totalRounds: Int,
+    val roundPairs: List<MatchingPairItem>,
+    val matchedCount: Int = 0
+) {
+    val isRoundCompleted: Boolean get() = matchedCount >= roundPairs.size
+}
+
+/**
  * Коллекция понятий и терминов (Словарь / Набор карточек)
  */
 data class TerminologyDeck(
@@ -181,6 +220,55 @@ data class TerminologyDeck(
         val term = terms.find { it.conceptId == conceptId } ?: return
         val srs = term.getOrCreateSrs(targetLang)
         srs.recordReview(qualityScore)
+    }
+
+    /**
+     * Преобразовать термины колоды в мультиязычные пары сопоставления.
+     * @param targetLang Изучаемый язык (левая колонка)
+     * @param nativeLang Язык интерфейса/пользователя (правая колонка)
+     */
+    fun toMatchingPairs(targetLang: String = defaultTargetLang, nativeLang: String = defaultSourceLang): List<MatchingPairItem> {
+        return terms.map { concept ->
+            val target = concept.getTranslation(targetLang)
+            val native = concept.getTranslation(nativeLang)
+            val srs = concept.getOrCreateSrs(targetLang)
+
+            val targetText = if (target.term.isNotEmpty()) target.term else concept.englishAnchor
+            val nativeText = if (native.term.isNotEmpty()) native.term else (native.definition.ifEmpty { concept.englishAnchor })
+
+            MatchingPairItem(
+                conceptId = concept.conceptId,
+                targetTerm = targetText,
+                nativeDefinition = nativeText,
+                correctCount = srs.correctCount,
+                wrongCount = srs.wrongCount
+            )
+        }
+    }
+
+    /**
+     * Создать игровой раунд с ограничением по количеству пар (по умолчанию 10 пар, как в AIDream).
+     */
+    fun toMatchingRound(
+        roundIndex: Int = 0,
+        pairsPerRound: Int = MatchingSessionConstants.DEFAULT_PAIRS_PER_ROUND,
+        targetLang: String = defaultTargetLang,
+        nativeLang: String = defaultSourceLang
+    ): MatchingRoundState {
+        val allPairs = toMatchingPairs(targetLang, nativeLang)
+        if (allPairs.isEmpty()) {
+            return MatchingRoundState(0, 1, emptyList(), 0)
+        }
+        val totalRounds = Math.max(1, (allPairs.size + pairsPerRound - 1) / pairsPerRound)
+        val clampedIdx = roundIndex.coerceIn(0, totalRounds - 1)
+        val start = clampedIdx * pairsPerRound
+        val end = Math.min(start + pairsPerRound, allPairs.size)
+        return MatchingRoundState(
+            roundIndex = clampedIdx,
+            totalRounds = totalRounds,
+            roundPairs = allPairs.subList(start, end),
+            matchedCount = 0
+        )
     }
 
     /**
