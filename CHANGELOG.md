@@ -5,6 +5,17 @@
 
 ---
 
+## [v1.3.2] - 2026-11-22 (Инициаторы: AIDream & UniTest)
+
+### 🌐 Dynamic Content Translation & Auto-Projection в core-education
+- **core-education**:
+  - `DynamicContentTranslator`: Чистый Kotlin JVM сервис динамического перевода учебного контента (терминов, формулировок вопросов, вариантов ответов и объяснений) на лету под выбранный пользователем язык интерфейса.
+  - `ConceptTerm.getTranslation(lang, fallbackLang, autoTranslate)`: Метод с возможностью автоматического доперевода недостающих языков через динамический шлюз с кэшированием.
+  - `PolymorphicQuizQuestion.render(lang, fallbackLang, shuffleOptions, autoTranslate)`: Поддержка адаптивного полиморфного рендеринга вопросов под язык интерфейса без жесткой привязки к языку создания базы.
+  - Добавлены модульные тесты в `EducationModuleTest.kt` (`testDynamicContentTranslatorParser`).
+
+---
+
 ## [v1.3.1] - 2026-11-22 (Инициаторы: AIDream & UniTest)
 
 ### 🎴 Matching Pairs Engine & Dynamic Cross-Language Projection в core-education

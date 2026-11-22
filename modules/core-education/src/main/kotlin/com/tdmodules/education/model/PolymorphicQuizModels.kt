@@ -73,9 +73,19 @@ data class PolymorphicQuizQuestion(
 
     /**
      * Получить отрендеренный вопрос для указанного языка с автоматическим fallback
+     * и возможностью мгновенного доперевода на лету (autoTranslate).
      */
-    fun render(lang: String, fallbackLang: String = "en", shuffleOptions: Boolean = true): RenderedQuestion {
+    fun render(
+        lang: String, 
+        fallbackLang: String = "en", 
+        shuffleOptions: Boolean = true,
+        autoTranslate: Boolean = false
+    ): RenderedQuestion {
         val targetLang = lang.lowercase().trim()
+        if (autoTranslate && !localizations.containsKey(targetLang)) {
+            com.tdmodules.education.engine.DynamicContentTranslator.ensureQuestionTranslated(this, targetLang)
+        }
+
         val loc = localizations[targetLang]
             ?: localizations[fallbackLang]
             ?: localizations.values.firstOrNull()

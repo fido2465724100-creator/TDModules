@@ -97,10 +97,14 @@ data class ConceptTerm(
     val tags: List<String> = emptyList()
 ) {
     /**
-     * Получить перевод для языка. Если точного языка нет, возвращает fallbackLang (по умолчанию "en").
+     * Получить перевод для языка. Если точного языка нет, возвращает fallbackLang (по умолчанию "en"),
+     * с возможностью мгновенного доперевода на лету (autoTranslate).
      */
-    fun getTranslation(lang: String, fallbackLang: String = "en"): TermTranslation {
+    fun getTranslation(lang: String, fallbackLang: String = "en", autoTranslate: Boolean = false): TermTranslation {
         val normalized = lang.lowercase().trim()
+        if (autoTranslate && !translations.containsKey(normalized)) {
+            com.tdmodules.education.engine.DynamicContentTranslator.ensureConceptTranslated(this, normalized)
+        }
         translations[normalized]?.let { return it }
 
         // Fallback на английский якорь

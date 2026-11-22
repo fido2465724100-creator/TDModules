@@ -229,4 +229,24 @@ class EducationModuleTest {
         assertEquals(1, srsDe.correctCount)
         assertEquals(0, srsDe.wrongCount)
     }
+
+    @Test
+    fun testDynamicContentTranslatorParser() {
+        val jsonMock = """[[["Привет мир","Hello world",null,null,1]],null,"en"]"""
+        val parsed = com.tdmodules.education.engine.DynamicContentTranslator.parseGoogleTranslateJson(jsonMock)
+        assertEquals("Привет мир", parsed)
+
+        // Тестируем концепт с autoTranslate фоллбеком
+        val concept = ConceptTerm(
+            conceptId = "concept_test_dyn",
+            englishAnchor = "Heart rate",
+            translations = mutableMapOf(
+                "ru" to TermTranslation(term = "Пульс")
+            )
+        )
+        // Локализация "ru" уже есть
+        assertEquals("Пульс", concept.getTranslation("ru", autoTranslate = false).term)
+        // Локализация "es" отсутствует, fallback дает englishAnchor без сбоя
+        assertEquals("Heart rate", concept.getTranslation("es", autoTranslate = false).term)
+    }
 }
