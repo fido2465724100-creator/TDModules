@@ -5,6 +5,19 @@
 
 ---
 
+## [v1.2.1] - 2026-11-22 (Инициатор: UniTest)
+
+### 📚 Мультиязычная статистика и счетчики успеваемости в core-education
+- **core-education**:
+  - `SpacedRepetitionData`: Добавлены поля `correctCount: Int = 0` и `wrongCount: Int = 0` для раздельного учета успеваемости (зеленый/красный счетчик) под каждый язык изучения без взаимного затирания (Zero-Breakage).
+  - `SpacedRepetitionData`: Добавлен метод `recordResult(isCorrect: Boolean, quality: Int, currentTime: Long)` для синхронного обновления счетчиков и интервалов SuperMemo SM-2.
+  - `TerminologyDeck`: Добавлен метод `recordMatchResult(conceptId: String, targetLang: String, isCorrect: Boolean)` для фиксации результатов игрового режима Matching Pairs.
+  - Дополнены модульные тесты в `EducationModuleTest.kt`.
+- **Документация и релизы**:
+  - Обновлен документ `docs/04_POLYGLOT_QUIZ_AND_DICTIONARY.md`.
+
+---
+
 ## [v1.2.0] - 2026-11-20 (Инициатор: TDnetScript)
 
 ### ⚡ Расширение HostSPI в core-tdscript (Bluetooth и AI)

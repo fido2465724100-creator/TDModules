@@ -12,8 +12,22 @@ data class SpacedRepetitionData(
     var repetitionCount: Int = 0,
     var easeFactor: Double = 2.5,
     var nextReviewTimestamp: Long = System.currentTimeMillis(),
-    var masteryLevel: Int = 0 // 0 (новый) .. 5 (полностью усвоено)
+    var masteryLevel: Int = 0, // 0 (новый) .. 5 (полностью усвоено)
+    var correctCount: Int = 0,
+    var wrongCount: Int = 0
 ) {
+    /**
+     * Зафиксировать правильный или ошибочный ответ (совместимо с UI счетчиками зеленый/красный)
+     */
+    fun recordResult(isCorrect: Boolean, quality: Int = if (isCorrect) 5 else 1, currentTime: Long = System.currentTimeMillis()) {
+        if (isCorrect) {
+            correctCount++
+        } else {
+            wrongCount++
+        }
+        recordReview(quality, currentTime)
+    }
+
     /**
      * Обновление интервала по классической формуле SM-2:
      * @param quality Оценка ответа: 0 (полный провал) .. 5 (мгновенный идеальный ответ).
@@ -167,5 +181,14 @@ data class TerminologyDeck(
         val term = terms.find { it.conceptId == conceptId } ?: return
         val srs = term.getOrCreateSrs(targetLang)
         srs.recordReview(qualityScore)
+    }
+
+    /**
+     * Зафиксировать результат сопоставления пары (верно / неверно) для целевого языка
+     */
+    fun recordMatchResult(conceptId: String, targetLang: String, isCorrect: Boolean) {
+        val term = terms.find { it.conceptId == conceptId } ?: return
+        val srs = term.getOrCreateSrs(targetLang)
+        srs.recordResult(isCorrect)
     }
 }

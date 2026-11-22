@@ -42,11 +42,22 @@ class EducationModuleTest {
         assertEquals(6, srsDe.intervalDays)
         assertEquals(2, srsDe.repetitionCount)
 
+        // Тестируем учет результатов для счетчиков (верно / неверно)
+        srsDe.recordResult(isCorrect = true)
+        assertEquals(1, srsDe.correctCount)
+        assertEquals(0, srsDe.wrongCount)
+
+        srsDe.recordResult(isCorrect = false)
+        assertEquals(1, srsDe.correctCount)
+        assertEquals(1, srsDe.wrongCount)
+
         // Доктор решает переключиться на испанский — прогресс немецкого сохранился, а испанский готов!
         val srsEs = concept.getOrCreateSrs("es")
         assertEquals(1, srsEs.intervalDays)
         assertEquals(0, srsEs.masteryLevel)
-        assertEquals(6, srsDe.intervalDays) // Немецкий не затерт!
+        assertEquals(0, srsEs.correctCount)
+        assertEquals(0, srsEs.wrongCount)
+        assertEquals(1, srsDe.correctCount) // Немецкий не затерт!
     }
 
     @Test
