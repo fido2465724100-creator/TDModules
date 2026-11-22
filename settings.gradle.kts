@@ -30,3 +30,7 @@ project(":core-education").projectDir = file("modules/core-education")
 include(":core-tdscript")
 project(":core-tdscript").projectDir = file("modules/core-tdscript")
 
+include(":core-localization")
+project(":core-localization").projectDir = file("modules/core-localization")
+
+

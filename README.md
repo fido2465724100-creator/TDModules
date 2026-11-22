@@ -59,6 +59,7 @@ TDModules/
 | **`core-ai`** | Ротация бесплатных моделей (`gpt-oss-120b`, `Meta-Llama-3_3-70B`, `openai-fast`), мониторинг здоровья эндпоинтов, обработка Retry-After, фильтр инъекций, профилировщик аппаратных ресурсов (RAM/CPU). | `FreeModelPool`<br>`PromptSanitizer`<br>`DeviceProfiler` |
 | **`core-education`** | **Concept-Pivot Model**: словари привязаны к семантическим концептам, позволяя врачам и специалистам добавлять новые языки (DE, ES, RU, EN) с сохранением интервального повторения (SM-2 SRS). **Polymorphic Quiz**: смена языка теста на лету (например, физика с немецкого на английский) без потери правильных ответов и прогресса. Всеядный парсер. | `ConceptTermModels`<br>`PolymorphicQuizModels`<br>`PositionalShuffle`<br>`UnifiedEducationalParser` |
 | **`core-tdscript`** | **0 KB VRAM / Headless**: унифицированное ядро сценарного языка TDscript (SPEC-TDS-CORE-1.0.1). Эшелонированная безопасность `Capabilities`, нормативный контракт `HostSPI` для текстового режима TUI (Tdroid), сетей (TDnetScript) и робототехники (TDRobotics). | `Lexer`<br>`Parser`<br>`AST`<br>`Interpreter`<br>`Capabilities`<br>`HostSPI` |
+| **`core-localization`** | **109 мировых языков**: реестр ISO 639-1 с эндонимами и RTL, отказоустойчивая цепочка фоллбеков (`Target -> Fallback EN -> Key`), ленивая загрузка словарей в ОЗУ, реактивные слушатели смены языка. | `LocalizationEngine`<br>`LocaleRegistry`<br>`BuiltinTranslations`<br>`CommonKeys` |
 
 
 ---
