@@ -20,7 +20,8 @@ data class DeviceHardwareSpecs(
     val architecture: String,
     val isReadyForLocalLlm: Boolean,
     val recommendedModelTier: String,
-    val recommendations: List<ModelRecommendation>
+    val recommendations: List<ModelRecommendation>,
+    val socModel: String = architecture
 )
 
 // Псевдоним типа для совместимости с кодом UniTest
