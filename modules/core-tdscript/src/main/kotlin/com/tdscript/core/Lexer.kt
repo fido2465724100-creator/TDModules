@@ -174,6 +174,37 @@ class Lexer(sourceCode: String, forcedLanguage: String? = null) {
                 continue
             }
 
+            // Hexadecimal Numbers (e.g. 0x76, 0xD0, 0xF4, 0x1000L)
+            if (ch == '0' && (peek(1) == 'x' || peek(1) == 'X')) {
+                advance() // consume '0'
+                advance() // consume 'x' / 'X'
+                val sb = java.lang.StringBuilder()
+                var isLong = false
+                while (peek() != null) {
+                    val c = peek()!!
+                    if (c.isDigit() || (c in 'a'..'f') || (c in 'A'..'F')) {
+                        sb.append(advance()!!)
+                    } else if (c == 'L' || c == 'l') {
+                        advance()
+                        isLong = true
+                        break
+                    } else {
+                        break
+                    }
+                }
+                if (sb.isEmpty()) {
+                    throw LexerException("Invalid hexadecimal literal", startLine, startCol)
+                }
+                val hexStr = sb.toString()
+                val big = java.math.BigInteger(hexStr, 16)
+                if (isLong || big > Int.MAX_VALUE.toBigInteger() || big < Int.MIN_VALUE.toBigInteger()) {
+                    tokens.add(Token(TokenType.LONG, big.toLong(), startLine, startCol))
+                } else {
+                    tokens.add(Token(TokenType.INT, big.toInt(), startLine, startCol))
+                }
+                continue
+            }
+
             // Numbers
             if (ch.isDigit()) {
                 val sb = java.lang.StringBuilder()

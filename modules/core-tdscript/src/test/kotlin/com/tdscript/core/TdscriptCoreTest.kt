@@ -183,4 +183,55 @@ class TdscriptCoreTest {
         assertTrue(host.diagnosticLines.contains("EMERGENCY_STOP_TRIGGERED"))
         assertTrue(interpreter.stepCount > 50L)
     }
+
+    @Test
+    fun testHexadecimalLiterals() {
+        val code = """
+            let bmeAddr = 0x76;
+            let chipIdReg = 0xD0;
+            let ctrlMeas = 0xF4;
+            let longHex = 0x1000L;
+        """.trimIndent()
+        val lexer = Lexer(code)
+        val tokens = lexer.tokenize()
+
+        val intTokens = tokens.filter { it.type == TokenType.INT }
+        val longTokens = tokens.filter { it.type == TokenType.LONG }
+
+        assertEquals(3, intTokens.size)
+        assertEquals(0x76, intTokens[0].value)
+        assertEquals(118, intTokens[0].value)
+        assertEquals(0xD0, intTokens[1].value)
+        assertEquals(208, intTokens[1].value)
+        assertEquals(0xF4, intTokens[2].value)
+        assertEquals(244, intTokens[2].value)
+
+        assertEquals(1, longTokens.size)
+        assertEquals(4096L, longTokens[0].value)
+
+        // Test in Interpreter
+        val interpreter = runScript(code)
+        assertEquals(118, (interpreter.globals["bmeAddr"] as Number).toInt())
+        assertEquals(208, (interpreter.globals["chipIdReg"] as Number).toInt())
+        assertEquals(244, (interpreter.globals["ctrlMeas"] as Number).toInt())
+    }
+
+    @Test
+    fun testCompactRepairErrorFormat() {
+        val diag = DiagnosticError(
+            errorCode = "TDS_E104_SCOPE_VIOLATION",
+            line = 14,
+            column = 5,
+            message = "Address 0x68 not allowed in I2C scope",
+            expected = "0x76 | 0x77",
+            actual = "0x68"
+        )
+        val repair = diag.toRepairFormat()
+        assertEquals("E104@14:5 exp=0x76|0x77 got=0x68", repair)
+
+        val json = diag.toJson()
+        assertTrue(json.contains("\"error_code\": \"TDS_E104_SCOPE_VIOLATION\""))
+        assertTrue(json.contains("\"line\": 14"))
+        assertTrue(json.contains("\"column\": 5"))
+    }
 }
