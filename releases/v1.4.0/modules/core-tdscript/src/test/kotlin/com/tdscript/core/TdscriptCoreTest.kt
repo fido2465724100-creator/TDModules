@@ -134,4 +134,53 @@ class TdscriptCoreTest {
         assertEquals(true, interpreter.globals["stopped"])
         assertTrue(host.diagnosticLines.contains("EMERGENCY_STOP_TRIGGERED"))
     }
+
+    @Test
+    fun testLStringConcatenationProhibited() {
+        val code1 = """
+            let msg = L"MSG_TEMP:Temp is {temp}"
+            let bad = msg + " extra"
+        """.trimIndent()
+        try {
+            runScript(code1)
+            fail("Expected RuntimeException for LString concatenation")
+        } catch (e: RuntimeException) {
+            assertTrue(e.message?.contains("TDS_E105_LSTRING_CONCAT_PROHIBITED") == true)
+        }
+
+        val code2 = """
+            let msg = L"MSG_TEMP:Temp is {temp}"
+            let bad = "Prefix: " + msg
+        """.trimIndent()
+        try {
+            runScript(code2)
+            fail("Expected RuntimeException for LString concatenation")
+        } catch (e: RuntimeException) {
+            assertTrue(e.message?.contains("TDS_E105_LSTRING_CONCAT_PROHIBITED") == true)
+        }
+    }
+
+    @Test
+    fun testStepLimitExceededEmergencyStop() {
+        val host = StandardHostSPI()
+        val code = """
+            var i = 0
+            while (true) {
+                i = i + 1
+            }
+        """.trimIndent()
+        val lexer = Lexer(code)
+        val tokens = lexer.tokenize()
+        val parser = Parser(tokens)
+        val program = parser.parse()
+        val interpreter = Interpreter(host, maxSteps = 50L)
+        try {
+            interpreter.execute(program)
+            fail("Expected RuntimeException for step limit exceeded")
+        } catch (e: RuntimeException) {
+            assertTrue(e.message?.contains("TDS_E106_STEP_LIMIT_EXCEEDED") == true)
+        }
+        assertTrue(host.diagnosticLines.contains("EMERGENCY_STOP_TRIGGERED"))
+        assertTrue(interpreter.stepCount > 50L)
+    }
 }

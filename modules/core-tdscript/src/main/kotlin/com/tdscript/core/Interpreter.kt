@@ -123,7 +123,7 @@ interface HostSPI {
     fun aiAsk(prompt: String): String? = if (!checkCapability(Capabilities.NET_READ, "NET_READ")) null else "AI_OK: $prompt"
 }
 
-class StandardHostSPI(
+open class StandardHostSPI(
     override var capabilities: Int = Capabilities.NET_READ,
     override var capabilityScope: CapabilityScope = CapabilityScope.UNRESTRICTED
 ) : HostSPI {
@@ -131,17 +131,32 @@ class StandardHostSPI(
     override val diagnosticLines = mutableListOf<String>()
 }
 
-class Interpreter(val host: HostSPI = StandardHostSPI()) {
+class Interpreter(
+    val host: HostSPI = StandardHostSPI(),
+    val maxSteps: Long = 10_000_000L
+) {
     // Script Global Scope: single symbol table
     val globals = mutableMapOf<String, Any?>()
+    var stepCount: Long = 0L
+        private set
 
     fun execute(program: ProgramNode) {
+        stepCount = 0L
         for (stmt in program.statements) {
             execStmt(stmt)
         }
     }
 
+    private fun checkStepLimit() {
+        stepCount++
+        if (stepCount > maxSteps) {
+            host.emergencyStop()
+            throw RuntimeException("TDS_E106_STEP_LIMIT_EXCEEDED: Maximum execution step limit ($maxSteps) exceeded. Host emergencyStop triggered.")
+        }
+    }
+
     fun execStmt(stmt: ASTNode) {
+        checkStepLimit()
         when (stmt) {
             is VarDeclNode -> {
                 val value = evalExpr(stmt.expr)
@@ -158,6 +173,7 @@ class Interpreter(val host: HostSPI = StandardHostSPI()) {
             }
             is WhileStmtNode -> {
                 while (isTruthy(evalExpr(stmt.condition))) {
+                    checkStepLimit()
                     execStmt(stmt.body)
                 }
             }
@@ -225,7 +241,7 @@ class Interpreter(val host: HostSPI = StandardHostSPI()) {
 
                 when (expr.op) {
                     "+" -> {
-                        if (left is LString && right is LString) {
+                        if (left is LString || right is LString) {
                             throw RuntimeException("TDS_E105_LSTRING_CONCAT_PROHIBITED: Direct concatenation of LString is forbidden to preserve 109-language grammar integrity.")
                         }
                         if (left is String || right is String) {
