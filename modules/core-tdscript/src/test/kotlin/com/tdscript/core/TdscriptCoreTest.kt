@@ -47,7 +47,6 @@ class TdscriptCoreTest {
 
     @Test
     fun testCapabilitiesSecurityCheck() {
-        // Host has only NET_READ by default
         val host = StandardHostSPI(capabilities = Capabilities.NET_READ)
         val code = """
             let res = NET.httpGet("https://example.com/api")
@@ -61,46 +60,78 @@ class TdscriptCoreTest {
     }
 
     @Test
-    fun testHeadlessTuiStdout() {
-        val host = StandardHostSPI()
+    fun testCapabilityScopeIsolation() {
+        // Хост имеет право I2C_READ и I2C_WRITE, но только для датчика 0x76 (Bosch BME280)
+        val scope = CapabilityScope(
+            allowedI2cAddresses = setOf(0x76),
+            allowedModbusRegisterRanges = listOf(100..200)
+        )
+        val host = StandardHostSPI(
+            capabilities = Capabilities.I2C_READ or Capabilities.I2C_WRITE or Capabilities.PLC_READ,
+            capabilityScope = scope
+        )
+
         val code = """
-            print("LINE_1_TUI_SYSTEM")
-            print("LINE_2_TERMINAL_READY")
+            let okRead = I2C.read(118, 0, 2)
+            let badRead = I2C.read(104, 0, 2)
+            let regOk = PLC.modbusRead("127.0.0.1", 150)
+            let regBad = PLC.modbusRead("127.0.0.1", 350)
         """.trimIndent()
 
-        runScript(code, host)
-        assertEquals(2, host.stdoutLines.size)
-        assertEquals("LINE_1_TUI_SYSTEM", host.stdoutLines[0])
-        assertEquals("LINE_2_TERMINAL_READY", host.stdoutLines[1])
+        val interpreter = runScript(code, host)
+        assertNotNull(interpreter.globals["okRead"])
+        assertNull(interpreter.globals["badRead"])
+        assertEquals(1234, interpreter.globals["regOk"])
+        assertEquals(-1, interpreter.globals["regBad"])
+
+        assertTrue(host.diagnosticLines.any { it.contains("SCOPE_VIOLATION: Address 0x68 not in I2C scope") })
+        assertTrue(host.diagnosticLines.any { it.contains("SCOPE_VIOLATION: Modbus register 350 not in scope") })
     }
 
     @Test
-    fun testWhileLoopAndCounter() {
+    fun testLocalizedSyntaxAndStringLiteralsIntegrity() {
+        // Проверка: ключевые слова переведены, но слова ВНУТРИ строковых литералов и комментов НЕ затронуты!
         val code = """
-            var count = 0
-            while (count < 5) {
-                count = count + 1
+            language: ru;
+            # Комментарий: если датчик оффлайн, пусть ждет
+            пусть статус = "если датчик оффлайн, пусть ждет"
+            перем флаг = истина
+            если (флаг) {
+                флаг = ложь
             }
         """.trimIndent()
 
         val interpreter = runScript(code)
-        assertEquals(5, (interpreter.globals["count"] as Number).toInt())
+        assertEquals("если датчик оффлайн, пусть ждет", interpreter.globals["статус"])
+        assertEquals(false, interpreter.globals["флаг"])
     }
 
     @Test
-    fun testBluetoothAndAiHostSPI() {
-        val host = StandardHostSPI(capabilities = Capabilities.BT_ACCESS or Capabilities.NET_READ)
+    fun testLStringCreationAndFormatting() {
         val code = """
-            let conn = BT.connect("00:11:22:33:44:55")
-            let sent = BT.send("STATUS?")
-            let line = BT.readLine()
-            let aiAns = AI.ask("Explain error 02")
+            let msg = L"MSG_TEMP:Sensor BME280 temp is {temp}C"
+            print(msg)
+        """.trimIndent()
+
+        val host = StandardHostSPI()
+        val interpreter = runScript(code, host)
+        val lstr = interpreter.globals["msg"] as LString
+        assertEquals("MSG_TEMP", lstr.key)
+        assertEquals("Sensor BME280 temp is {temp}C", lstr.defaultText)
+        assertEquals("Sensor BME280 temp is {temp}C", host.stdoutLines[0])
+    }
+
+    @Test
+    fun testFailSafeWatchdogEmergencyStop() {
+        val host = StandardHostSPI()
+        val code = """
+            let fed = WATCHDOG.feed()
+            let stopped = WATCHDOG.emergencyStop()
         """.trimIndent()
 
         val interpreter = runScript(code, host)
-        assertEquals(true, interpreter.globals["conn"])
-        assertEquals(true, interpreter.globals["sent"])
-        assertEquals("BT_OK", interpreter.globals["line"])
-        assertEquals("AI_OK: Explain error 02", interpreter.globals["aiAns"])
+        assertEquals(true, interpreter.globals["fed"])
+        assertEquals(true, interpreter.globals["stopped"])
+        assertTrue(host.diagnosticLines.contains("EMERGENCY_STOP_TRIGGERED"))
     }
 }

@@ -5,6 +5,22 @@
 
 ---
 
+## [v1.4.0] - 2026-11-23 (Инициаторы: TDRobotics, TDscript Studio, TDnetScript)
+
+### ⚡ Аппаратно-программная платформа TDscript Core 1.1, CapabilityScope и Мультиязычность
+- **core-tdscript**:
+  - `Lexer`: Поддержка директивы `language: <code>;` с распознаванием ключевых слов на уровне токенизатора без порчи строковых литералов и комментариев.
+  - `LString`: Добавлен тип `LString` и литерал `L"..."` для безопасной 109-язычной локализации без конкатенации строк.
+  - `CapabilityScope`: Добавлен гранулярный контроль области действия (`allowedI2cAddresses`, `allowedUsbVidPid`, `allowedBleServiceUuids`, `allowedModbusRegisterRanges`, `allowedSerialPorts`).
+  - `HostSPI`: Расширен методами низкоуровневых шин `i2cRead/i2cWrite`, `serialRead/serialWrite`, аппаратного обнаружения `probe()`, сторожевого таймера `watchdogFeed()` и защитного останова `emergencyStop()`.
+  - `TransportModels`: Описаны форматы `TransportAdapterInfo`, `TransportType` и `DriverManifest` с цифровой подписью пакета и `min_core_version`.
+- **Документация и стандарты**:
+  - Добавлены `docs/SPEC-TDS-CORE-1.1.md`, `docs/SPEC-TDS-HOST-1.1.md`, `docs/SPEC-TDS-DRIVERS.md`, `docs/SPEC-TDS-AI.md`.
+- **Релизы**:
+  - Зафиксирован релиз `v1.4.0`.
+
+---
+
 ## [v1.3.2] - 2026-11-22 (Инициаторы: AIDream & UniTest)
 
 ### 🌐 Dynamic Content Translation & Auto-Projection в core-education

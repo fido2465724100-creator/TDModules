@@ -264,7 +264,7 @@ class Parser(private val tokens: List<Token>) {
         val tok = peek()
         return when (tok.type) {
             TokenType.INT, TokenType.LONG, TokenType.FLOAT,
-            TokenType.STRING, TokenType.BOOLEAN, TokenType.NULL -> {
+            TokenType.STRING, TokenType.LSTRING, TokenType.BOOLEAN, TokenType.NULL -> {
                 advance()
                 LiteralNode(tok.value, tok.type.name)
             }
