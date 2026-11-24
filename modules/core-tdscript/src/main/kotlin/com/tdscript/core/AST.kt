@@ -22,11 +22,11 @@ data class UnaryExprNode(val op: String, val operand: ASTNode) : ASTNode()
 
 data class PostfixUpdateNode(val targetIdent: String, val op: String) : ASTNode()
 
-data class CallExprNode(val callee: ASTNode, val arguments: List<ASTNode>) : ASTNode()
+data class CallExprNode(val callee: ASTNode, val arguments: List<ASTNode>, val line: Int = 0, val col: Int = 0) : ASTNode()
 
-data class MemberAccessNode(val obj: ASTNode, val propertyName: String) : ASTNode()
+data class MemberAccessNode(val obj: ASTNode, val propertyName: String, val line: Int = 0, val col: Int = 0) : ASTNode()
 
-data class IndexAccessNode(val obj: ASTNode, val indexExpr: ASTNode) : ASTNode()
+data class IndexAccessNode(val obj: ASTNode, val indexExpr: ASTNode, val line: Int = 0, val col: Int = 0) : ASTNode()
 
 data class IdentifierNode(val name: String) : ASTNode()
 

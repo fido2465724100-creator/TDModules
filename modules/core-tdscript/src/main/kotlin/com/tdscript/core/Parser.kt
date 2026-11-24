@@ -221,16 +221,16 @@ class Parser(private val tokens: List<Token>) {
                 TokenType.DOT -> {
                     advance()
                     val ident = expect(TokenType.IDENTIFIER, "Expected identifier after '.'")
-                    node = MemberAccessNode(node, ident.value as String)
+                    node = MemberAccessNode(node, ident.value as String, ident.line, ident.col)
                 }
                 TokenType.LBRACKET -> {
-                    advance()
+                    val lbracket = advance()
                     val idx = expression()
                     expect(TokenType.RBRACKET, "Expected ']' after index")
-                    node = IndexAccessNode(node, idx)
+                    node = IndexAccessNode(node, idx, lbracket.line, lbracket.col)
                 }
                 TokenType.LPAREN -> {
-                    advance()
+                    val lparen = advance()
                     val args = mutableListOf<ASTNode>()
                     if (peek().type != TokenType.RPAREN) {
                         args.add(expression())
@@ -240,7 +240,7 @@ class Parser(private val tokens: List<Token>) {
                         }
                     }
                     expect(TokenType.RPAREN, "Expected ')' after argument list")
-                    node = CallExprNode(node, args)
+                    node = CallExprNode(node, args, lparen.line, lparen.col)
                 }
                 else -> break
             }

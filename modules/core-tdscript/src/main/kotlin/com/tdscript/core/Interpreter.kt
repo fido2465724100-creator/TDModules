@@ -190,7 +190,22 @@ class Interpreter(
     fun evalExpr(expr: ASTNode): Any? {
         return when (expr) {
             is AssignmentNode -> evalAssignment(expr)
-            is LiteralNode -> expr.value
+            is LiteralNode -> {
+                if (expr.value is LString) {
+                    val lstr = expr.value
+                    val regex = Regex("""\{([a-zA-Z_][a-zA-Z0-9_]*)\}""")
+                    val params = lstr.params.toMutableMap()
+                    regex.findAll(lstr.defaultText).forEach { match ->
+                        val varName = match.groupValues[1]
+                        if (globals.containsKey(varName)) {
+                            params[varName] = formatValue(globals[varName])
+                        }
+                    }
+                    LString(lstr.key, lstr.defaultText, params)
+                } else {
+                    expr.value
+                }
+            }
             is IdentifierNode -> globals[expr.name]
             is UnaryExprNode -> {
                 val operand = evalExpr(expr.operand)
@@ -336,6 +351,10 @@ class Interpreter(
                         val i = idx.toInt()
                         if (i in 0 until obj.size) obj[i] else null
                     }
+                    obj is ByteArray && idx is Number -> {
+                        val i = idx.toInt()
+                        if (i in 0 until obj.size) (obj[i].toInt() and 0xFF) else null
+                    }
                     obj is Map<*, *> -> obj[idx]
                     else -> null
                 }
@@ -375,36 +394,51 @@ class Interpreter(
         if (call.callee is MemberAccessNode) {
             val target = call.callee.obj
             val method = call.callee.propertyName
+            val line = if (call.callee.line > 0) call.callee.line else (if (call.line > 0) call.line else 1)
+            val col = if (call.callee.col > 0) call.callee.col else (if (call.col > 0) call.col else 1)
+
             if (target is IdentifierNode) {
                 when (target.name) {
-                    "JSON" -> if (method == "parse" && args.isNotEmpty()) return parseSimpleJson(args[0]?.toString() ?: "")
+                    "JSON" -> {
+                        if (method == "parse") {
+                            if (args.isEmpty()) throw RuntimeException("TDS_E106: E106@$line:$col invalid_signature for method=parse on=JSON: expected string argument")
+                            return parseSimpleJson(args[0]?.toString() ?: "")
+                        }
+                        throw RuntimeException("TDS_E106: E106@$line:$col unknown_method=$method on=JSON")
+                    }
                     "NET" -> when (method) {
                         "httpGet" -> return host.netHttpGet(args.getOrNull(0)?.toString() ?: "")
                         "ping" -> return host.netPing(args.getOrNull(0)?.toString() ?: "")
                         "scanPort" -> return host.netScanPort(args.getOrNull(0)?.toString() ?: "", (args.getOrNull(1) as? Number)?.toInt() ?: 80)
                         "wol" -> return host.netWol(args.getOrNull(0)?.toString() ?: "")
+                        else -> throw RuntimeException("TDS_E106: E106@$line:$col unknown_method=$method on=NET")
                     }
                     "PLC" -> when (method) {
                         "modbusRead" -> return host.plcModbusRead(args.getOrNull(0)?.toString() ?: "", (args.getOrNull(1) as? Number)?.toInt() ?: 0)
                         "modbusWrite" -> return host.plcModbusWrite(args.getOrNull(0)?.toString() ?: "", (args.getOrNull(1) as? Number)?.toInt() ?: 0, (args.getOrNull(2) as? Number)?.toInt() ?: 0)
+                        else -> throw RuntimeException("TDS_E106: E106@$line:$col unknown_method=$method on=PLC")
                     }
                     "PHONE" -> when (method) {
                         "alarm" -> return host.phoneAlarm((args.getOrNull(0) as? Number)?.toInt() ?: 100)
                         "vibrate" -> return host.phoneVibrate((args.getOrNull(0) as? Number)?.toLong() ?: 100L)
                         "torch" -> return host.phoneTorch(args.getOrNull(0) == true)
                         "beep" -> return host.phoneBeep((args.getOrNull(0) as? Number)?.toInt() ?: 150)
+                        else -> throw RuntimeException("TDS_E106: E106@$line:$col unknown_method=$method on=PHONE")
                     }
                     "UI" -> when (method) {
                         "toast" -> return host.uiToast(args.getOrNull(0)?.toString() ?: "")
                         "log" -> return host.uiLog(args.getOrNull(0)?.toString() ?: "")
+                        else -> throw RuntimeException("TDS_E106: E106@$line:$col unknown_method=$method on=UI")
                     }
                     "BT" -> when (method) {
                         "connect" -> return host.btConnect(args.getOrNull(0)?.toString() ?: "")
                         "send" -> return host.btSend(args.getOrNull(0)?.toString() ?: "")
                         "readLine" -> return host.btReadLine()
+                        else -> throw RuntimeException("TDS_E106: E106@$line:$col unknown_method=$method on=BT")
                     }
                     "AI" -> when (method) {
                         "ask" -> return host.aiAsk(args.getOrNull(0)?.toString() ?: "")
+                        else -> throw RuntimeException("TDS_E106: E106@$line:$col unknown_method=$method on=AI")
                     }
                     "I2C" -> when (method) {
                         "read" -> {
@@ -419,6 +453,7 @@ class Interpreter(
                             val data = args.getOrNull(2) as? ByteArray ?: ByteArray(0)
                             return host.i2cWrite(addr, reg, data)
                         }
+                        else -> throw RuntimeException("TDS_E106: E106@$line:$col unknown_method=$method on=I2C")
                     }
                     "SERIAL" -> when (method) {
                         "write" -> {
@@ -431,15 +466,52 @@ class Interpreter(
                             val max = (args.getOrNull(1) as? Number)?.toInt() ?: 64
                             return host.serialRead(port, max)
                         }
+                        else -> throw RuntimeException("TDS_E106: E106@$line:$col unknown_method=$method on=SERIAL")
                     }
                     "WATCHDOG" -> when (method) {
                         "feed" -> return host.watchdogFeed()
                         "emergencyStop" -> { host.emergencyStop(); return true }
+                        else -> throw RuntimeException("TDS_E106: E106@$line:$col unknown_method=$method on=WATCHDOG")
                     }
                 }
             }
+
+            // Instance method dispatch on object/primitive
+            val targetObj = evalExpr(target)
+            val typeName = if (targetObj != null) targetObj::class.simpleName ?: "Object" else (if (target is IdentifierNode) target.name else "null")
+            when (targetObj) {
+                is LString -> {
+                    if (method == "format") {
+                        val lang = args.getOrNull(0)?.toString() ?: "en"
+                        return targetObj.format(lang)
+                    }
+                }
+                is List<*> -> {
+                    if (method == "size" || method == "length") return targetObj.size
+                }
+                is ByteArray -> {
+                    if (method == "size" || method == "length") return targetObj.size
+                }
+                is Map<*, *> -> {
+                    if (method == "size" || method == "length") return targetObj.size
+                    if (method == "containsKey" && args.isNotEmpty()) return targetObj.containsKey(args[0])
+                }
+                is String -> {
+                    if (method == "length") return targetObj.length
+                }
+            }
+            throw RuntimeException("TDS_E106: E106@$line:$col unknown_method=$method on=$typeName")
         }
-        return null
+
+        if (call.callee is IdentifierNode) {
+            val line = if (call.line > 0) call.line else 1
+            val col = if (call.col > 0) call.col else 1
+            throw RuntimeException("TDS_E106: E106@$line:$col unknown_function=${call.callee.name}")
+        }
+
+        val line = if (call.line > 0) call.line else 1
+        val col = if (call.col > 0) call.col else 1
+        throw RuntimeException("TDS_E106: E106@$line:$col invalid_callable")
     }
 
     private fun evalAssignment(assign: AssignmentNode): Any? {
@@ -539,8 +611,19 @@ class Interpreter(
     private fun formatValue(v: Any?): String {
         return when (v) {
             null -> "null"
-            is LString -> v.format("en")
+            is LString -> {
+                val params = v.params.toMutableMap()
+                val regex = Regex("""\{([a-zA-Z_][a-zA-Z0-9_]*)\}""")
+                regex.findAll(v.defaultText).forEach { match ->
+                    val varName = match.groupValues[1]
+                    if (!params.containsKey(varName) && globals.containsKey(varName)) {
+                        params[varName] = formatValue(globals[varName])
+                    }
+                }
+                v.copy(params = params).format("en")
+            }
             is Double -> if (v.isInfinite()) "Infinity" else v.toString()
+            is ByteArray -> "[" + v.joinToString(", ") { "0x" + (it.toInt() and 0xFF).toString(16).padStart(2, '0').uppercase() } + "]"
             else -> v.toString()
         }
     }

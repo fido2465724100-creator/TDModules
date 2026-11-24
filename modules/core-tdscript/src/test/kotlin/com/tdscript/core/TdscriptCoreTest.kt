@@ -234,4 +234,63 @@ class TdscriptCoreTest {
         assertTrue(json.contains("\"line\": 14"))
         assertTrue(json.contains("\"column\": 5"))
     }
+
+    @Test
+    fun testUnknownMethodThrowsTdsE106() {
+        val code1 = """
+            let safeI2CAddr = 118;
+            let s = safeI2CAddr.toString(16);
+        """.trimIndent()
+        try {
+            runScript(code1)
+            fail("Expected RuntimeException with TDS_E106 for safeI2CAddr.toString(16)")
+        } catch (e: RuntimeException) {
+            assertTrue(e.message?.contains("TDS_E106") == true)
+            assertTrue(e.message?.contains("unknown_method=toString on=Int") == true)
+        }
+
+        val code2 = """
+            I2C.unsupportedMethod(1, 2);
+        """.trimIndent()
+        try {
+            runScript(code2)
+            fail("Expected RuntimeException with TDS_E106 for I2C.unsupportedMethod")
+        } catch (e: RuntimeException) {
+            assertTrue(e.message?.contains("TDS_E106") == true)
+            assertTrue(e.message?.contains("unknown_method=unsupportedMethod on=I2C") == true)
+        }
+    }
+
+    @Test
+    fun testByteArrayDeterministicFormattingAndIndexing() {
+        val host = StandardHostSPI(Capabilities.HARDWARE or Capabilities.I2C_READ)
+        val code = """
+            let bytes = I2C.read(118, 208, 1);
+            print(bytes, " ", bytes[0]);
+            print(" size=", bytes.size());
+        """.trimIndent()
+
+        runScript(code, host)
+        assertEquals(2, host.stdoutLines.size)
+        assertEquals("[0x00] 0", host.stdoutLines[0])
+        assertEquals(" size=1", host.stdoutLines[1])
+    }
+
+    @Test
+    fun testLStringInterpolationFromScope() {
+        val host = StandardHostSPI()
+        val code = """
+            let temp = 24.5;
+            let alert = L"ALERT_TEMP:Temperature is {temp}";
+            print(alert);
+        """.trimIndent()
+
+        val interpreter = runScript(code, host)
+        assertEquals(1, host.stdoutLines.size)
+        assertEquals("Temperature is 24.5", host.stdoutLines[0])
+
+        val lstr = interpreter.globals["alert"] as LString
+        assertEquals("ALERT_TEMP", lstr.key)
+        assertEquals("24.5", lstr.params["temp"])
+    }
 }
