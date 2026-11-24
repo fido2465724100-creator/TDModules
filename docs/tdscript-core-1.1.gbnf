@@ -30,16 +30,7 @@ multiplicative-expr ::= unary-expr (ws ("*" | "/" | "%") ws unary-expr)*
 
 unary-expr ::= ("!" | "-" | "+")? ws primary-expr
 
-primary-expr ::= hex-literal
-               | float-literal
-               | int-literal
-               | lstring-literal
-               | string-literal
-               | bool-literal
-               | null-literal
-               | call-expr
-               | identifier
-               | "(" ws expr ws ")"
+primary-expr ::= hex-literal | float-literal | int-literal | lstring-literal | string-literal | bool-literal | null-literal | call-expr | identifier | "(" ws expr ws ")"
 
 call-expr ::= subsystem-call | print-call | generic-call
 
